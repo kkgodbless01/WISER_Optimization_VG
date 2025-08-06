@@ -4,6 +4,7 @@ nano project2_quantum_finance/resources.md
 1. **Project Leap**
    - “Quantum-proofing the financial system” (EY, WEF 2025): https://…
 
+vim project2_quantum_finance/resources.md
 2. **Quantum Fourier Transform & Phase Estimation**
    - Tutorial by Dr. X: https://…
 
@@ -12,5 +13,7 @@ nano project2_quantum_finance/resources.md
    - IBM fault-tolerant roadmap: https://…
 
 … (items 4 through 10)
+vim project2_quantum_finance/resources.md
 
+:%d
 
