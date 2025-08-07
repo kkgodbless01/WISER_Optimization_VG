@@ -47,4 +47,24 @@ Solutions will be evaluated against internal benchmark implementations at Vangua
 *	Video recording for project orientation 2025 QUANTUM PROGRAM ❯ Day 7 ❯ Projects Orientation Part 2 - YouTube
 
  
+ 8. ## Resources & Industry Context
+
+1. **Project Leap: Quantum in Finance**  
+   - “Quantum-proofing the financial system” (EY), WEF report 2025: https://…  
+
+2. **Core Algorithms**  
+   - Quantum Fourier Transform & Phase Estimation tutorial: https://…  
+
+3. **HPC & AI Futures**  
+   - TOP500 “Future of HPC, QC, and AI” (Jun 2025): https://…  
+
+4. **MIT Finance Perspective**  
+   - “Ask an MIT Professor: The potential of quantum computing in finance”: https://…  
+
+5. **Vanguard-Recommended Reading**  
+   - “Responsible Quantum Readiness” (Mehta et al., IEEE QCE 2024): IEEESubmissionvECID911.pdf  
+   - “Decomposition Pipeline for Portfolio Optimization” (Acharya et al., arXiv 2023): https://arxiv.org/…  
+   - … (continue your list)  
+
+*(Full list lives in [docs/resources.md](docs/resources.md))*
 
