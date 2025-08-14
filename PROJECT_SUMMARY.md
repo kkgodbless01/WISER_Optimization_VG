@@ -55,3 +55,11 @@ Kingsley Godbless — persistent, detail‑oriented, and committed to transparen
 📊 Step 0 Dependency Check: 0 packages failed to install
 📊 Step 0 Dependency Check: 0 packages failed to install
 📊 Step 0 Dependency Check: 0 packages failed to install
+
+---
+
+## Progress Checklist
+- [x] Step 0: Environment bootstrap & logging polish
+- [ ] Step 1: Static solver implementation
+- [ ] Step 2: Output formatting & recruiter-ready artifacts
+- [ ] Step 3: Final review & submission
