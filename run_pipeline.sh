@@ -428,3 +428,13 @@ PY
 
 # Fallback: capture Step 1 SHA if not already inserted
 git rev-parse --short HEAD > .step1_sha  # [auto] fallback
+
+# === Auto-validate Step 1 metrics (all-in-one hook) ===
+if [ -f outputs/step_1/metrics.json ]; then
+  echo "🔎 Validating Step 1 metrics..."
+  python3 scripts/post_step1_validate.py || { echo "❌ Validation failed. Aborting."; exit 1; }
+fi
+
+# Ensure SHA files exist (fallbacks for summary linking)
+if [ ! -f .step0_sha ]; then git rev-parse --short HEAD > .step0_sha; fi
+git rev-parse --short HEAD > .step1_sha
