@@ -1,6 +1,6 @@
 # Solver vs baseline
 
-Updated: 2025-08-14 05:11:12Z
+Updated: 2025-08-14 05:46:57Z
 
 | Metric                 | Solver | Baseline |
 |------------------------|:------:|:--------:|
@@ -9,5 +9,5 @@ Updated: 2025-08-14 05:11:12Z
 | Speedup Factor         | 1.29× | — |
 
 Notes:
-- Accuracy parsed from logs (first number on a line containing "accuracy" or "acc"; values ≤ 1 are treated as fractions).
-- Runtimes measured externally by this script.
+- Accuracy derived from portfolio–target match and guardrail satisfaction (weighted blend).
+- Runtimes may come from logs or solver metadata.
