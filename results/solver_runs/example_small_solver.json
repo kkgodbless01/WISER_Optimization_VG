@@ -1,0 +1,9 @@
+{
+  "instance": "example_small",
+  "solver": "pulp",
+  "objective": 50.0,
+  "runtime_s": 0.02037501335144043,
+  "status": "Optimal",
+  "selected": 4,
+  "total_weight": 50
+}
