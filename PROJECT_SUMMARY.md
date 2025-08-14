@@ -12,12 +12,12 @@ A transparent, end-to-end benchmarking pipeline for quantum‑inspired solvers o
 | Metric                | Solver Variant | Baseline |
 |-----------------------|----------------|----------|
 | Average Runtime (s)   | XX.XX          | YY.YY    |
-| Solution Accuracy (%) | XX.X           | YY.Y     |
+| Solution Accuracy (%) | None | None |
 | Speedup Factor        | X.XX×          | —        |
 
 Full table:
 - results/comparison_tables/solver_vs_baseline.md
-- GitHub view: https://github.com/your-username/your-repo/blob/main/results/comparison_tables/solver_vs_baseline.md
+- GitHub view: https://github.com/kkgodbless01/WISER_Optimization_VG/blob/main/results/comparison_tables/solver_vs_baseline.md
 
 ## Reproduce quickly
 1. Create the environment and install dependencies (see README).
@@ -25,9 +25,9 @@ Full table:
 3. Build the comparison table and verify metrics with provided commands.
 
 ## Links
-- Repository home: https://github.com/your-username/your-repo
-- README (getting started): https://github.com/your-username/your-repo/blob/main/README.md
-- Results table: https://github.com/your-username/your-repo/blob/main/results/comparison_tables/solver_vs_baseline.md
+- Repository home: https://github.com/kkgodbless01/WISER_Optimization_VG
+- README (getting started): https://github.com/kkgodbless01/WISER_Optimization_VG/blob/main/README.md
+- Results table: https://github.com/kkgodbless01/WISER_Optimization_VG/blob/main/results/comparison_tables/solver_vs_baseline.md
 
 ## Author
 Kingsley Godbless — persistent, detail‑oriented, and committed to transparent, methodical problem‑solving.

@@ -6,13 +6,13 @@ What’s inside:
 • Recruiter‑ready README and summary
 
 Key results (snapshot):
-• Runtime: Solver = XX.XX s vs Baseline = YY.YY s
-• Accuracy: Solver = XX.X% vs Baseline = YY.Y%
+• Runtime: Solver = None s vs Baseline = None s
+• Accuracy: Solver = None% vs Baseline = None%
 
 Full project + results:
-https://github.com/your-username/your-repo
+https://github.com/kkgodbless01/WISER_Optimization_VG
 Results table:
-https://github.com/your-username/your-repo/blob/main/results/comparison_tables/solver_vs_baseline.md
+https://github.com/kkgodbless01/WISER_Optimization_VG/blob/main/results/comparison_tables/solver_vs_baseline.md
 
 If you’re hiring for data, optimization, or research roles, I’d love to connect.
 — Kingsley Godbless
