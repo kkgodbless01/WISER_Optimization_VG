@@ -69,33 +69,33 @@ PY
  log_mode_line="Log Mode: $([ \"${WISER_NO_COLOR:-0}\" = \"1\" ] && echo Plain-Text || echo Color)"
  # Local time in Ghana, recruiter-friendly format: 14-Aug-2025 13:07
  env_summary_line="Env: $(TZ=Africa/Accra date +%d-%b-%Y\ %H:%M) | Git: $(git rev-parse --short HEAD 2>/dev/null || echo N/A) | Python: $(python3 --version 2>/dev/null | { read _ v _; echo $v; })"
- sed -i \"/^Log Mode:/d\" PROJECT_SUMMARY.md
- sed -i \"/^Env:/d\" PROJECT_SUMMARY.md
- sed -i \"1i$env_summary_line\" PROJECT_SUMMARY.md
- sed -i \"1i$log_mode_line\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"/^Log Mode:/d\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"/^Env:/d\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"1i$env_summary_line\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"1i$log_mode_line\" PROJECT_SUMMARY.md
 
  # --- Step 0.1: Refresh Git SHA after auto-commit ---
  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
    final_sha=$(git rev-parse --short HEAD)
-   sed -i \"s/^Env: .*Git: [^|]*/Env: $(TZ=Africa/Accra date +%d-%b-%Y\ %H:%M) | Git: $final_sha/\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]    sed -i \"s/^Env: .*Git: [^|]*/Env: $(TZ=Africa/Accra date +%d-%b-%Y\ %H:%M) | Git: $final_sha/\" PROJECT_SUMMARY.md
  fi
  log_mode_line="Log Mode: $([ \"${WISER_NO_COLOR:-0}\" = \"1\" ] && echo Plain-Text || echo Color)"
  # Use local time in Africa/Accra
  env_summary_line="Env: $(TZ=Africa/Accra date +%F_%T) | Git: $(git rev-parse --short HEAD 2>/dev/null || echo N/A) | Python: $(python3 --version 2>/dev/null | awk \\"{print \\$2}\\")"
- sed -i \"/^Log Mode:/d\" PROJECT_SUMMARY.md
- sed -i \"/^Env:/d\" PROJECT_SUMMARY.md
- sed -i \"1i$env_summary_line\" PROJECT_SUMMARY.md
- sed -i \"1i$log_mode_line\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"/^Log Mode:/d\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"/^Env:/d\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"1i$env_summary_line\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i \"1i$log_mode_line\" PROJECT_SUMMARY.md
 
  # --- Step 0.1: Refresh Git SHA after auto-commit ---
  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
    final_sha=$(git rev-parse --short HEAD)
-   sed -i \"s/^Env: .*Git: [^|]*/Env: $(TZ=Africa/Accra date +%F_%T) | Git: $final_sha/\" PROJECT_SUMMARY.md
+# [disabled-broken-sed]    sed -i \"s/^Env: .*Git: [^|]*/Env: $(TZ=Africa/Accra date +%F_%T) | Git: $final_sha/\" PROJECT_SUMMARY.md
  fi
  log_mode_line="Log Mode: $([ "${WISER_NO_COLOR:-0}" = "1" ] && echo Plain-Text || echo Color)"
- sed -i "/^Log Mode:/d" PROJECT_SUMMARY.md
- sed -i "1i$log_mode_line" PROJECT_SUMMARY.md
-    sed -i "1i$summary_line" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i "/^Log Mode:/d" PROJECT_SUMMARY.md
+# [disabled-broken-sed]  sed -i "1i$log_mode_line" PROJECT_SUMMARY.md
+# [disabled-broken-sed]     sed -i "1i$summary_line" PROJECT_SUMMARY.md
     if [ -s "$log_file" ]; then
         echo "${c_yellow}📄 Recent failures:${c_reset}"
         tail -n 5 "$log_file"
@@ -143,7 +143,7 @@ fi
 # --- Step 0: Summary for PROJECT_SUMMARY.md (top prepend) ---
 fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
 summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
-sed -i "1i$summary_line" PROJECT_SUMMARY.md
+# [disabled-broken-sed] sed -i "1i$summary_line" PROJECT_SUMMARY.md
 if [ -s "$log_file" ]; then
     echo "📄 Recent failures:"
     tail -n 5 "$log_file"
@@ -185,7 +185,7 @@ fi
 # --- Step 0: Summary for PROJECT_SUMMARY.md (top prepend) ---
 fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
 summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
-sed -i "1i$summary_line" PROJECT_SUMMARY.md
+# [disabled-broken-sed] sed -i "1i$summary_line" PROJECT_SUMMARY.md
 # --- Step 0: Auto-venv activation ---
 if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
     echo "⚡ Activating venv..."
@@ -446,3 +446,88 @@ if [ -f outputs/step_1/metrics.json ]; then
 fi
 if [ ! -f .step0_sha ]; then git rev-parse --short HEAD > .step0_sha; fi
 git rev-parse --short HEAD > .step1_sha
+
+## SAFE-SUMMARY-UPDATE
+{
+  SUMMARY="PROJECT_SUMMARY.md"
+  REPO_URL="https://github.com/kkgodbless01/WISER_Optimization_VG"
+
+  # Validate Step 1 metrics if present
+  if [ -f outputs/step_1/metrics.json ]; then
+    echo "🔎 Validating Step 1 metrics..."
+    python3 scripts/post_step1_validate.py || { echo "❌ Validation failed. Aborting."; exit 1; }
+  fi
+
+  # Collect info
+  LOG_MODE=$( [ "${WISER_NO_COLOR:-0}" = "1" ] && echo "Plain-Text" || echo "Color" )
+  DT_LOCAL=$(TZ=Africa/Accra date +"%d-%b-%Y %H:%M")
+  PY_VER=$(python3 -V 2>/dev/null | awk "{print \$2}")
+  FINAL_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo N/A)
+  [ -f .step0_sha ] && STEP0_SHA=$(cat .step0_sha) || STEP0_SHA="$FINAL_SHA"
+  [ -f .step1_sha ] && STEP1_SHA=$(cat .step1_sha) || STEP1_SHA="$FINAL_SHA"
+
+  # Step 0 runtime from existing Runtime: line (if any)
+  if grep -q "^Runtime:" "$SUMMARY" 2>/dev/null; then
+    STEP0_RT=$(grep "^Runtime:" "$SUMMARY" | head -n1 | awk "{print \$2}")
+  else
+    STEP0_RT="N/A"
+  fi
+
+  # Step 1 runtime from metrics.json (if any)
+  if [ -f outputs/step_1/metrics.json ]; then
+    STEP1_RT=$(python3 - <<'PY'
+import json; 
+m=json.load(open("outputs/step_1/metrics.json"))
+print(m.get("runtime_sec", m.get("runtime_s", "N/A")))
+PY
+)
+  else
+    STEP1_RT="N/A"
+  fi
+
+  # Clean top-of-file Log Mode / Env / Runtime lines safely (no sed), then prepend fresh ones
+  [ -f "$SUMMARY" ] || touch "$SUMMARY"
+
+  awk '
+    BEGIN{skip=0}
+    NR==1 && \$0 ~ /^Log Mode:/ {next}
+    NR==1 && \$0 !~ /^Log Mode:/ {print \$0; next}
+    NR==2 && \$0 ~ /^Env:/ {next}
+    NR==3 && \$0 ~ /^Runtime:/ {next}
+    {print}
+  ' "$SUMMARY" > "$SUMMARY.tmp.body" || cp "$SUMMARY" "$SUMMARY.tmp.body"
+
+  TMP_HEAD=$(mktemp)
+  {
+    echo "Log Mode: ${LOG_MODE}"
+    echo "Env: ${DT_LOCAL} | Git: [${FINAL_SHA}](${REPO_URL}/commit/${FINAL_SHA}) | Python: ${PY_VER}"
+    echo "Runtime: ${STEP0_RT}"
+  } > "$TMP_HEAD"
+
+  # Remove old runtime table
+  awk '
+    BEGIN{skip=0}
+    /<!-- RUNTIMES-TABLE-START -->/{skip=1; next}
+    /<!-- RUNTIMES-TABLE-END -->/{skip=0; next}
+    {if (!skip) print}
+  ' "$SUMMARY.tmp.body" > "$SUMMARY.tmp.no_table"
+
+  # Prepend fresh runtime table with separate SHAs
+  TMP_TABLE=$(mktemp)
+  {
+    echo "<!-- RUNTIMES-TABLE-START -->"
+    echo ""
+    echo "| Step   | Runtime (s) | Git |"
+    echo "|--------|-------------|-----|"
+    echo "| Step 0 | ${STEP0_RT} | [${STEP0_SHA}](${REPO_URL}/commit/${STEP0_SHA}) |"
+    echo "| Step 1 | ${STEP1_RT} | [${STEP1_SHA}](${REPO_URL}/commit/${STEP1_SHA}) |"
+    echo ""
+    echo "<!-- RUNTIMES-TABLE-END -->"
+    echo ""
+  } > "$TMP_TABLE"
+
+  cat "$TMP_TABLE" "$TMP_HEAD" "$SUMMARY.tmp.no_table" > "$SUMMARY.new" && mv "$SUMMARY.new" "$SUMMARY"
+  rm -f "$SUMMARY.tmp.body" "$SUMMARY.tmp.no_table" "$TMP_TABLE" "$TMP_HEAD"
+
+  echo "✅ Summary refreshed (Log Mode, Env, runtimes, clickable SHAs)."
+}
