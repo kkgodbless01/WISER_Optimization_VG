@@ -7,6 +7,15 @@ ROOT="$(pwd)"
 
 echo "=== Step 0: Environment bootstrap ==="
 # --- Step 0: Init colors and log file ---
+if [ "${WISER_NO_COLOR:-0}" = "1" ]; then
+  c_reset=""; c_green=""; c_yellow=""; c_red=""; c_cyan=""
+else
+  c_reset=$(tput sgr0 2>/dev/null || echo "")
+  c_green=$(tput setaf 2 2>/dev/null || echo "")
+  c_yellow=$(tput setaf 3 2>/dev/null || echo "")
+  c_red=$(tput setaf 1 2>/dev/null || echo "")
+  c_cyan=$(tput setaf 6 2>/dev/null || echo "")
+fi
 c_reset=$(tput sgr0 2>/dev/null || echo "")
 c_green=$(tput setaf 2 2>/dev/null || echo "")
 c_yellow=$(tput setaf 3 2>/dev/null || echo "")
