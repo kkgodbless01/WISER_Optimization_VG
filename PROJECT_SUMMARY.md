@@ -63,3 +63,10 @@ Kingsley Godbless — persistent, detail‑oriented, and committed to transparen
 - [ ] Step 1: Static solver implementation
 - [ ] Step 2: Output formatting & recruiter-ready artifacts
 - [ ] Step 3: Final review & submission
+
+<!-- STEP1-STA>
+## Step 1: Static solver results (auto)
+- **Objective:** min leftover budget (greedy baseline)
+- **Best cost:** 50.0
+- **Runtime:** 0.000515s
+- **Artifacts:** [solution](outputs/step_1/solution.json) | [metrics](outputs/step_1/metrics.json)
