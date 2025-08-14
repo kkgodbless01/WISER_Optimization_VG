@@ -1,0 +1,12 @@
+{
+  "instance_id": "example_small",
+  "capacity": 50,
+  "items": [
+    {"id": "A", "value": 12, "weight": 10},
+    {"id": "B", "value": 10, "weight": 9},
+    {"id": "C", "value": 20, "weight": 25},
+    {"id": "D", "value": 18, "weight": 20},
+    {"id": "E", "value": 8,  "weight": 6}
+  ]
+}
+
