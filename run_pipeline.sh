@@ -354,6 +354,7 @@ fi
 # --- Auto-commit hook end ---
 
 
+
 ## AUTO-REFRESH-RUNTIMES
 {
   SUMMARY="PROJECT_SUMMARY.md"
@@ -378,14 +379,20 @@ PY
     STEP1_RUNTIME="N/A"
   fi
 
-  # Latest SHA (after pipeline run)
-  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    SHA=$(git rev-parse --short HEAD)
-    SHA_LINK="${REPO_URL}/commit/${SHA}"
+  # Capture separate SHAs if possible
+  if [ -f .step0_sha ]; then
+    STEP0_SHA=$(cat .step0_sha)
   else
-    SHA="N/A"
-    SHA_LINK="#"
+    STEP0_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo N/A)
   fi
+  if [ -f .step1_sha ]; then
+    STEP1_SHA=$(cat .step1_sha)
+  else
+    STEP1_SHA=$STEP0_SHA
+  fi
+
+  STEP0_SHA_LINK="${REPO_URL}/commit/${STEP0_SHA}"
+  STEP1_SHA_LINK="${REPO_URL}/commit/${STEP1_SHA}"
 
   # Remove old table
   if [ -f "$SUMMARY" ]; then
@@ -398,19 +405,22 @@ PY
     touch "$SUMMARY"
   fi
 
-  # Prepend new table with clickable SHA
+  # Prepend new table with separate clickable SHAs
   TMPFILE=$(mktemp)
   {
     echo "<!-- RUNTIMES-TABLE-START -->"
     echo ""
     echo "| Step   | Runtime (s) | Git |"
     echo "|--------|-------------|-----|"
-    echo "| Step 0 | ${STEP0_RUNTIME} | [${SHA}](${SHA_LINK}) |"
-    echo "| Step 1 | ${STEP1_RUNTIME} | [${SHA}](${SHA_LINK}) |"
+    echo "| Step 0 | ${STEP0_RUNTIME} | [${STEP0_SHA}](${STEP0_SHA_LINK}) |"
+    echo "| Step 1 | ${STEP1_RUNTIME} | [${STEP1_SHA}](${STEP1_SHA_LINK}) |"
     echo ""
     echo "<!-- RUNTIMES-TABLE-END -->"
     echo ""
     cat "$SUMMARY"
   } > "$TMPFILE"
   mv "$TMPFILE" "$SUMMARY"
+
+  # Cleanup temp SHA files
+  rm -f .step0_sha .step1_sha
 }
