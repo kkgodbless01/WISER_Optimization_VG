@@ -1,0 +1,41 @@
+
+# --- INSIDE NANO ---
+# Use arrow keys to find:
+#   "Instance": "20250813T213320Z_example_small_pulp"
+# Change it to:
+#   "Instance": "example_small"
+
+# Save and exit:
+#   Ctrl+O   (letter O, for "Write Out")
+#   Enter    (to confirm filename)
+#   Ctrl+X   (exit nano)
+
+# 2. Back in the shell, run the pipeline again
+./run_pipeline.sh
+
+# 3. Verify the merged row now has solver + baseline populated
+grep example_small results/comparison_tables/solver_vs_baseline.md
+
+# --- INSIDE NANO ---
+# Use arrow keys to find the line with:   "Instance": "20250813T213320Z_example_small_pulp"
+# Change it to exactly:                   "Instance": "example_small"
+
+# Press Ctrl+O   (the letter O, for "Write Out")
+{
+  "Instance": "example_small",
+  "instance_id": "example_small",
+  "instance_path": "data/example_instance.json",
+  "solver": "pulp",
+  "run_type": "baseline",
+  "metrics": {
+    "status": "Optimal",
+    "objective_value": 50.0,
+    "runtime_sec": 0.030,
+    "selected": 4,
+    "total_weight": 50,
+    "cost": 50.0
+  },
+  "timestamp_utc": "2025-08-13T21:33:20Z",
+  "source": "results/baseline_runs/example_small.json"
+}
+

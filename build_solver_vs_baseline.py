@@ -1,31 +1,40 @@
-import json
-from pathlib import Path
-from datetime import datetime, timezone
+#!/usr/bin/env python3
+import os, json, re
+from datetime import datetime
 
-TABLE_PATH = Path("results/comparison_tables/solver_vs_baseline.md")
+ROOT = os.path.dirname(os.path.abspath(__file__))
+RES = os.path.join(ROOT, "results")
+SOLVER_DIR = os.path.join(RES, "solver_runs")
+BASELINE_DIR = os.path.join(RES, "baseline_runs")
+OUT_DIR = os.path.join(RES, "comparison_tables")
+OUT_PATH = os.path.join(OUT_DIR, "solver_vs_baseline.md")
 
-def read_json_safe(p):
-    try:
-        return json.loads(p.read_text())
-    except Exception:
-        return {}
+os.makedirs(OUT_DIR, exist_ok=True)
 
-def pick_first_nonempty(*vals):
-    for v in vals:
-        if v not in (None, "", "-"):
+TIMESTAMP_RE = re.compile(r"^\d{8}T\d{6}Z_")
+SUFFIX_RE = re.compile(r"_(pulp|solver|baseline)$", re.IGNORECASE)
+
+def norm_instance_from_name(name: str) -> str:
+    stem = os.path.splitext(os.path.basename(name))[0]
+    stem = TIMESTAMP_RE.sub("", stem)
+    stem = SUFFIX_RE.sub("", stem)
+    return stem
+
+def dig(d, path):
+    cur = d
+    for p in path.split("."):
+        if isinstance(cur, dict) and p in cur:
+            cur = cur[p]
+        else:
+            return None
+    return cur
+
+def first(d, keys):
+    for k in keys:
+        v = dig(d, k) if "." in k else d.get(k)
+        if v is not None:
             return v
     return None
-
-def get_field(d, names, default=None):
-    for n in names:
-        if n in d and d[n] not in (None, ""):
-            return d[n]
-    # nested common locations
-    meta = d.get("meta") or d.get("metadata") or {}
-    for n in names:
-        if n in meta and meta[n] not in (None, ""):
-            return meta[n]
-    return default
 
 def to_float(x):
     try:
@@ -33,144 +42,114 @@ def to_float(x):
     except Exception:
         return None
 
-def format_float(x, nd=3):
-    return f"{x:.{nd}f}"
+def load_records(folder, is_baseline_hint=False):
+    recs = []
+    if not os.path.isdir(folder):
+        return recs
+    for fn in os.listdir(folder):
+        if not fn.endswith(".json"):
+            continue
+        path = os.path.join(folder, fn)
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+        except Exception:
+            continue
 
-def classify_path(p: Path) -> str:
-    parts = [s.lower() for s in p.parts]
-    # heuristics: anything in a "baseline" folder or filename treated as baseline
-    if any("baseline" in s for s in parts):
-        return "baseline"
-    return "solver"
+        inst = first(data, ["instance", "Instance", "instance_id"])
+        if not inst:
+            inst = norm_instance_from_name(fn)
+        norm_inst = norm_instance_from_name(inst)
 
-def infer_instance_from_name(name: str) -> str:
-    # strip timestamps and solver tags heuristically
-    # keep it simple: take middle portion if separated by underscores
-    base = name.replace(".json", "")
-    return base
+        solver = first(data, ["solver", "metrics.solver"]) or ("baseline" if is_baseline_hint else "unknown")
+        if is_baseline_hint and solver.lower() in ("pulp", "cbc", "gurobi", "solver"):
+            solver = "baseline"
 
-def load_runs():
-    solver, baseline = [], []
-    for p in Path("results").rglob("*.json"):
-        kind = classify_path(p)
-        d = read_json_safe(p)
-        # fields
-        instance = pick_first_nonempty(
-            get_field(d, ["instance", "problem", "case", "dataset", "name"]),
-            infer_instance_from_name(p.name)
-        )
-        solver_name = pick_first_nonempty(
-            get_field(d, ["solver", "method", "variant", "algorithm"]), "unknown"
-        )
-        objective = get_field(d, ["objective", "obj", "value"])
-        runtime_s = get_field(d, ["runtime_s", "runtime", "elapsed_s", "time", "duration_s"])
-        status = get_field(d, ["status", "solve_status", "result"], "Unknown")
-        selected = get_field(d, ["selected", "num_selected", "k", "chosen"])
-        total_weight = get_field(d, ["total_weight", "TotalWeight", "weight", "sum_weight"])
+        objective = first(data, ["objective", "metrics.objective", "metrics.objective_value"])
+        runtime = first(data, ["runtime_s", "metrics.runtime_s", "metrics.runtime_sec", "runtime_seconds"])
+        status = first(data, ["status", "metrics.status"])
+        selected = first(data, ["selected", "metrics.selected"])
+        total_weight = first(data, ["total_weight", "metrics.total_weight"])
 
-        rec = {
-            "path": str(p),
-            "instance": str(instance),
-            "solver": str(solver_name),
-            "objective": objective,
-            "runtime_s": runtime_s,
-            "status": status,
-            "selected": selected,
-            "total_weight": total_weight,
-        }
-        (baseline if kind == "baseline" else solver).append(rec)
-    return solver, baseline
+        recs.append({
+            "instance": norm_inst,
+            "raw_instance": inst,
+            "solver": str(solver),
+            "objective": to_float(objective),
+            "runtime_s": to_float(runtime),
+            "status": status if status else "-",
+            "selected": int(selected) if isinstance(selected, (int,float,str)) and str(selected).isdigit() else selected,
+            "total_weight": int(total_weight) if isinstance(total_weight, (int,float,str)) and str(total_weight).isdigit() else total_weight,
+            "source": os.path.relpath(path, ROOT),
+            "is_baseline": is_baseline_hint,
+            "display_name": norm_inst if not is_baseline_hint else os.path.splitext(fn)[0]
+        })
+    return recs
 
-def pick_best(records):
-    # Choose record with numeric runtime; prefer Optimal then Feasible
-    def status_rank(s):
-        s = (s or "").lower()
-        if "optimal" in s:
-            return 0
-        if "feas" in s:
-            return 1
-        return 2
+solver_recs = load_records(SOLVER_DIR, is_baseline_hint=False)
+baseline_recs = load_records(BASELINE_DIR, is_baseline_hint=True)
 
-    def key(rec):
-        rt = to_float(rec["runtime_s"])
-        return (status_rank(rec["status"]), rt if rt is not None else float("inf"))
+sol_by_inst = {r["instance"]: r for r in solver_recs}
+base_by_inst = {r["instance"]: r for r in baseline_recs}
+instances = sorted(set(sol_by_inst.keys()) | set(base_by_inst.keys()))
 
-    by_instance = {}
-    for r in records:
-        inst = r["instance"]
-        if inst not in by_instance:
-            by_instance[inst] = r
-        else:
-            # keep the better key
-            if key(r) < key(by_instance[inst]):
-                by_instance[inst] = r
-    return by_instance
+rows = []
+for inst in instances:
+    s = sol_by_inst.get(inst)
+    b = base_by_inst.get(inst)
+    d_obj = d_time = None
+    if s and b and s.get("objective") is not None and b.get("objective") is not None:
+        d_obj = s["objective"] - b["objective"]
+    if s and b and s.get("runtime_s") is not None and b.get("runtime_s") is not None:
+        d_time = s["runtime_s"] - b["runtime_s"]
 
-def build_table():
-    solver_runs, baseline_runs = load_runs()
-    best_solver = pick_best(solver_runs)
-    best_base = pick_best(baseline_runs)
+    rows.append({
+        "Instance": inst,
+        "Solver": s["solver"] if s else "-",
+        "Objective": s["objective"] if s else "-",
+        "Runtime (s)": s["runtime_s"] if s else "-",
+        "Status": s["status"] if s else "-",
+        "Selected": s["selected"] if s else "-",
+        "TotalWeight": s["total_weight"] if s else "-",
+        "Baseline Objective": b["objective"] if b else "-",
+        "Baseline Runtime (s)": b["runtime_s"] if b else "-",
+        "ΔObj vs Base": d_obj if d_obj is not None else "-",
+        "ΔTime vs Base": d_time if d_time is not None else "-",
+        "Source": s["source"] if s else (b["source"] if b else "-"),
+        "BaselineSource": b["source"] if b else "-"
+    })
 
-    instances = sorted(set(best_solver.keys()) | set(best_base.keys()))
-    lines = []
-    lines.append("# Solver vs baseline")
-    # header metadata
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ UTC")
-    baseline_state = "Detected" if best_base else "None detected (deltas shown as '-')" 
-    lines.append("")
-    lines.append(f"- **Generated:** {now}")
-    lines.append(f"- **Baseline:** {baseline_state}")
-    lines.append("")
-    header = [
-        "Instance", "Solver", "Objective", "Runtime (s)", "Status",
-        "Selected", "TotalWeight",
-        "Baseline Objective", "Baseline Runtime (s)",
-        "ΔObj vs Base", "ΔTime vs Base", "Source"
-    ]
-    lines.append("| " + " | ".join(header) + " |")
-    lines.append("| " + " | ".join(["---"] * len(header)) + " |")
+ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%SZ UTC")
+lines = []
+lines.append("# Solver vs baseline\n")
+lines.append(f"- **Generated:** {ts}\n")
+lines.append(f"- **Baseline:** {'Detected' if baseline_recs else 'None'}\n")
+lines.append("")
+lines.append("| Instance | Solver | Objective | Runtime (s) | Status | Selected | TotalWeight | Baseline Objective | Baseline Runtime (s) | ΔObj vs Base | ΔTime vs Base | Source |")
+lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
 
-    for inst in instances:
-        srec = best_solver.get(inst)
-        brec = best_base.get(inst)
+def fmt(x):
+    if isinstance(x, float):
+        return f"{x:.3f}"
+    return str(x)
 
-        solver_name = srec["solver"] if srec else "-"
-        s_obj_f = to_float(srec["objective"]) if srec else None
-        s_rt_f = to_float(srec["runtime_s"]) if srec else None
-        s_stat = srec["status"] if srec else "-"
-        s_sel = srec["selected"] if srec else "-"
-        s_tw = srec["total_weight"] if srec else "-"
+for r in rows:
+    lines.append("| " + " | ".join([
+        r["Instance"],
+        fmt(r["Solver"]),
+        fmt(r["Objective"]),
+        fmt(r["Runtime (s)"]),
+        fmt(r["Status"]),
+        fmt(r["Selected"]),
+        fmt(r["TotalWeight"]),
+        fmt(r["Baseline Objective"]),
+        fmt(r["Baseline Runtime (s)"]),
+        fmt(r["ΔObj vs Base"]),
+        fmt(r["ΔTime vs Base"]),
+        r["Source"],
+    ]) + " |")
 
-        b_obj_f = to_float(brec["objective"]) if brec else None
-        b_rt_f = to_float(brec["runtime_s"]) if brec else None
+with open(OUT_PATH, "w") as f:
+    f.write("\n".join(lines) + "\n")
 
-        # formatted
-        s_obj = format_float(s_obj_f, 3) if s_obj_f is not None else "-"
-        s_rt = format_float(s_rt_f, 3) if s_rt_f is not None else "-"
-        b_obj = format_float(b_obj_f, 3) if b_obj_f is not None else "-"
-        b_rt = format_float(b_rt_f, 3) if b_rt_f is not None else "-"
-
-        d_obj = "-"
-        d_time = "-"
-        if s_obj_f is not None and b_obj_f is not None:
-            d_obj = format_float(s_obj_f - b_obj_f, 3)
-        if s_rt_f is not None and b_rt_f is not None:
-            d_time = format_float(s_rt_f - b_rt_f, 3)
-
-        source = srec["path"] if srec else (brec["path"] if brec else "-")
-
-        row = [
-            inst, solver_name, s_obj, s_rt, s_stat,
-            str(s_sel), str(s_tw),
-            b_obj, b_rt,
-            d_obj, d_time, source
-        ]
-        lines.append("| " + " | ".join(row) + " |")
-
-    TABLE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    TABLE_PATH.write_text("\n".join(lines))
-    print(f"Wrote {TABLE_PATH}")
-
-if __name__ == "__main__":
-    build_table()
-
+print(f"Wrote {OUT_PATH}")

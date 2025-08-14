@@ -1,0 +1,156 @@
+#!/bin/bash
+set -euo pipefail
+
+# Always operate from repo root
+cd "$(dirname "$0")"
+ROOT="$(pwd)"
+
+echo "=== Step 0: Environment bootstrap ==="
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_105531.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Summary for PROJECT_SUMMARY.md ---
+fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+echo "📊 Step 0 Dependency Check: $fail_count packages failed to install" | tee -a PROJECT_SUMMARY.md
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_104209.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_104012.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+
+# Build full stdlib skip list dynamically from this Python's stdlib
+builtin_skip="$(python - <<'PY'
+import sys
+print(" ".join(getattr(sys, 'stdlib_module_names', set())))
+PY
+)"
+
+# Gather imports from src/ and experiments/
+while IFS= read -r mod; do
+    # Skip stdlib modules
+    if [[ " $builtin_skip " =~ " $mod " ]]; then
+        continue
+    fi
+    # Skip if local module/package exists in repo
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || \
+       [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"
+        continue
+    fi
+    # Check if import works, else add to missing list
+    if ! python -c "import $mod" &>/dev/null; then
+        missing_pkgs+=("$mod")
+    fi
+done < <(
+    grep -hE '^import |^from ' src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null \
+    | sed -E 's/^from ([^ ]+).*/\1/; s/^import (.*)/\1/' \
+    | tr ',' '\n' \
+    | sed -E 's/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//' \
+    | cut -d. -f1 | sort -u
+)
+
+# Install any real missing packages
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages: ${missing_pkgs[*]}"
+    pip install "${missing_pkgs[@]}" || echo "⚠️ Some packages could not be installed"
+else
+    echo "✅ No extra imports missing"
+fi
+

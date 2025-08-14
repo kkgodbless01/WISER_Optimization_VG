@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Color toggle respects WISER_NO_COLOR=1
+if [ "${WISER_NO_COLOR:-0}" = "1" ]; then
+  c_ok=""; c_info=""; c_warn=""; c_err=""; c_reset=""
+else
+  c_ok="$(tput setaf 2 2>/dev/null || true)"
+  c_info="$(tput setaf 6 2>/dev/null || true)"
+  c_warn="$(tput setaf 3 2>/dev/null || true)"
+  c_err="$(tput setaf 1 2>/dev/null || true)"
+  c_reset="$(tput sgr0 2>/dev/null || true)"
+fi
+
+echo "=== Step 1: Static solver ==="
+python3 -m step_1.runner --input "data/problem.json" --outdir "outputs/step_1" --debug || {
+  echo "${c_err}Step 1 failed${c_reset}"; exit 1;
+}
+
+# Extract metrics using Python (no jq dependency)
+read -r BESTCOST RUNTIME SHA PYVER <<EOF
+$(python3 - <<'PY'
+import json, sys
+m = json.load(open("outputs/step_1/metrics.json"))
+print(m.get("best_cost"), m.get("runtime_s"), m.get("git_sha"), m.get("python"))
+PY
+)
+EOF
+
+# Update PROJECT_SUMMARY.md block with markers (idempotent)
+[ -f "PROJECT_SUMMARY.md" ] || touch "PROJECT_SUMMARY.md"
+awk '
+  BEGIN{in=0}
+  /<!-- STEP1-START -->/ {in=1; next}
+  /<!-- STEP1-END -->/   {in=0; next}
+  in==1 {next}
+  {print}
+' PROJECT_SUMMARY.md > PROJECT_SUMMARY.md.tmp && mv PROJECT_SUMMARY.md.tmp PROJECT_SUMMARY.md
+
+{
+  echo ""
+  echo "<!-- STEP1-STA>"
+  echo "## Step 1: Static solver results (auto)"
+  echo "- **Objective:** min leftover budget (greedy baseline)"
+  echo "- **Best cost:** ${BESTCOST}"
+  echo "- **Runtime:** ${RUNTIME}s"
+  echo "- **Artifacts:** [solution](outputs/step_1/solution.json) | [metrics](outputs/step_1/metrics.json)"
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    sha="$(git rev-parse --short HEAD 2>/dev/null || echo N/A)"
+    echo "- **Git:** [${sha}]('${REPO_URL}/commit/'${sha})"
+  fi
+  echo "<!-- STEP1-END -->"
+} >> PROJECT_SUMMARY.md
+
+echo "${c_ok}Step 1 complete.${c_reset} Summary updated."

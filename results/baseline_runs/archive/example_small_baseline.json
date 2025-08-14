@@ -1,0 +1,9 @@
+{
+  "instance": "example_small",
+  "solver": "baseline",
+  "objective": 55,
+  "runtime_s": 0.030,
+  "status": "Optimal",
+  "selected": 5,
+  "total_weight": 55
+}

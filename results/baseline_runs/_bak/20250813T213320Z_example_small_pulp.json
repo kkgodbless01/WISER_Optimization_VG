@@ -1,0 +1,17 @@
+{
+  "Instance": "example_small",
+  "instance_id": "example_small",
+  "instance_path": "data/example_instance.json",
+  "solver": "pulp",
+  "run_type": "baseline",
+  "metrics": {
+    "status": "Optimal",
+    "objective_value": 50.0,
+    "runtime_sec": 0.030,
+    "selected": 4,
+    "total_weight": 50,
+    "cost": 50.0
+  },
+  "timestamp_utc": "2025-08-13T21:33:20Z",
+  "source": "results/baseline_runs/example_small.json"
+}
