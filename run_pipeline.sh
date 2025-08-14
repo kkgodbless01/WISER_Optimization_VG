@@ -6,192 +6,310 @@ cd "$(dirname "$0")"
 ROOT="$(pwd)"
 
 echo "=== Step 0: Environment bootstrap ==="
-# --- Dependency Auto-Installer ---
-echo "🔍 Checking core Python packages..."
-PY_BIN="${VENV_PYTHON:-$(command -v python3 || command -v python)}"
+# --- Step 0: Init colors and log file ---
+c_reset=$(tput sgr0 2>/dev/null || echo "")
+c_green=$(tput setaf 2 2>/dev/null || echo "")
+c_yellow=$(tput setaf 3 2>/dev/null || echo "")
+c_red=$(tput setaf 1 2>/dev/null || echo "")
+c_cyan=$(tput setaf 6 2>/dev/null || echo "")
+ts=$(date +%Y%m%d_%H%M%S)
+log_file="pip_failures_${ts}.log"
+: > "$log_file"
 
-REQUIRED_PKGS=(
-  pandas
-  matplotlib
-  docplex
-  mip
-  numpy
-  scikit-learn
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "${VIRTUAL_ENV:-}" ]; then
+    echo "${c_cyan}⚡ Activating venv...${c_reset}"
+    # shellcheck disable=SC1091
+    . venv/bin/activate
+fi
+
+# --- Step 0: Guarded import scan (once per run) ---
+if [ -n "${WISER_DEP_SCAN_DONE:-}" ]; then
+    echo "${c_yellow}⏭️  Step 0 already ran; skipping duplicate scan.${c_reset}"
+else
+    export WISER_DEP_SCAN_DONE=1
+    echo "${c_cyan}🔍 Scanning Python files for imports...${c_reset}"
+    missing_pkgs=()
+    builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+    while IFS= read -r mod; do
+        if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+        if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+            echo "${c_cyan}🔹 Skipping local module: $mod${c_reset}"; continue
+        fi
+        if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+    done < <(grep -hRE "^import |^from " src/ experiments/ 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+    if [ ${#missing_pkgs[@]} -gt 0 ]; then
+        echo "${c_yellow}📦 Installing missing packages individually...${c_reset}"
+        for pkg in "${missing_pkgs[@]}"; do
+            if ! pip install "$pkg"; then
+                echo "$(date +%F_%T) - $pkg" >> "$log_file"
+                echo "${c_red}⚠️  Failed to install $pkg (logged)${c_reset}"
+            fi
+        done
+    else
+        echo "${c_green}✅ No extra imports missing${c_reset}"
+    fi
+    fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+    summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
+    touch PROJECT_SUMMARY.md
+    sed -i "1i$summary_line" PROJECT_SUMMARY.md
+    if [ -s "$log_file" ]; then
+        echo "${c_yellow}📄 Recent failures:${c_reset}"
+        tail -n 5 "$log_file"
+    else
+        echo "${c_green}📄 No failures logged${c_reset}"
+    fi
+fi
+# --- Step 0: Init log file ---
+ts=$(date +%Y%m%d_%H%M%S)
+log_file="pip_failures_${ts}.log"
+: > "$log_file"
+
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> "$log_file"
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Summary for PROJECT_SUMMARY.md (top prepend) ---
+fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
+sed -i "1i$summary_line" PROJECT_SUMMARY.md
+if [ -s "$log_file" ]; then
+    echo "📄 Recent failures:"
+    tail -n 5 "$log_file"
+else
+    echo "📄 No failures logged"
+fi
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_115749.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Summary for PROJECT_SUMMARY.md (top prepend) ---
+fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
+sed -i "1i$summary_line" PROJECT_SUMMARY.md
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_105531.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Summary for PROJECT_SUMMARY.md ---
+fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+echo "📊 Step 0 Dependency Check: $fail_count packages failed to install" | tee -a PROJECT_SUMMARY.md
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_104209.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+builtin_skip=$(python - <<PY
+import sys
+print(" ".join(getattr(sys, "stdlib_module_names", set())))
+PY
+)
+while IFS= read -r mod; do
+    if [[ " $builtin_skip " =~ " $mod " ]]; then continue; fi
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"; continue
+    fi
+    if ! python -c "import $mod" &>/dev/null; then missing_pkgs+=("$mod"); fi
+done < <(grep -hE "^import |^from " src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null | sed -E "s/^from ([^ ]+).*/\1/; s/^import (.*)/\1/" | tr "," "\n" | sed -E "s/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//" | cut -d. -f1 | sort -u)
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages individually..."
+    for pkg in "${missing_pkgs[@]}"; do
+        if ! pip install "$pkg"; then
+            echo "$(date +%F_%T) - $pkg" >> pip_failures_20250814_104012.log
+            echo "⚠️ Failed to install $pkg (logged)"
+        fi
+    done
+else
+    echo "✅ No extra imports missing"
+fi
+# --- Step 0: Auto-venv activation ---
+if [ -d "venv" ] && [ -f "venv/bin/activate" ] && [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚡ Activating venv..."
+    source venv/bin/activate
+fi
+
+# --- Step 0: Catch‑all import tester (built‑ins + locals skipped) ---
+echo "🔍 Scanning Python files for imports..."
+missing_pkgs=()
+
+# Build full stdlib skip list dynamically from this Python's stdlib
+builtin_skip="$(python - <<'PY'
+import sys
+print(" ".join(getattr(sys, 'stdlib_module_names', set())))
+PY
+)"
+
+# Gather imports from src/ and experiments/
+while IFS= read -r mod; do
+    # Skip stdlib modules
+    if [[ " $builtin_skip " =~ " $mod " ]]; then
+        continue
+    fi
+    # Skip if local module/package exists in repo
+    if [ -e "src/$mod.py" ] || [ -d "src/$mod" ] || \
+       [ -e "experiments/$mod.py" ] || [ -d "experiments/$mod" ]; then
+        echo "🔹 Skipping local module: $mod"
+        continue
+    fi
+    # Check if import works, else add to missing list
+    if ! python -c "import $mod" &>/dev/null; then
+        missing_pkgs+=("$mod")
+    fi
+done < <(
+    grep -hE '^import |^from ' src/*.py src/**/*.py experiments/*.py experiments/**/*.py 2>/dev/null \
+    | sed -E 's/^from ([^ ]+).*/\1/; s/^import (.*)/\1/' \
+    | tr ',' '\n' \
+    | sed -E 's/\s+as\s+\w+//; s/^[ \t]*//; s/[ \t]*$//' \
+    | cut -d. -f1 | sort -u
 )
 
-for pkg in "${REQUIRED_PKGS[@]}"; do
-  if ! "$PY_BIN" -c "import importlib; m='$pkg'; alias={'scikit-learn':'sklearn'}; importlib.import_module(alias.get(m, m))" &>/dev/null; then
-    echo "📦 Installing missing package: $pkg"
-    "$PY_BIN" -m pip install "$pkg"
+# Install any real missing packages
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "📦 Installing missing packages: ${missing_pkgs[*]}"
+    pip install "${missing_pkgs[@]}" || echo "⚠️ Some packages could not be installed"
+else
+    echo "✅ No extra imports missing"
+fi
+
+# --- Auto-commit hook start ---
+# Toggle with: export WISER_AUTOCOMMIT=1 (default) or =0 to disable
+if [ "${WISER_AUTOCOMMIT:-1}" = "1" ]; then
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+      echo "${c_cyan}🔃 Auto-committing run artifacts...${c_reset}"
+      git add run_pipeline.sh PROJECT_SUMMARY.md
+      git commit -m "chore: update Step 0 dep check + summary [auto]" || true
+      git push || true
+      echo "${c_green}✅ Auto-commit complete${c_reset}"
+    else
+      echo "${c_yellow}ℹ️  No git changes to commit${c_reset}"
+    fi
   else
-    echo "✅ $pkg already installed"
+    echo "${c_yellow}ℹ️  Git repo not detected; skipping auto-commit${c_reset}"
   fi
-done
-echo "✅ All core packages verified"
-# --- End Dependency Auto-Installer ---
-# Create venv if missing
-if [ ! -d "venv" ]; then
-  python3 -m venv venv
 fi
-# Activate venv
-source venv/bin/activate
-echo "Python: $(python -V)"
-echo "Which python: $(which python)"
-
-# Install deps for reproducibility
-if [ -f requirements.txt ]; then
-  echo "[Deps] Installing from requirements.txt..."
-  pip install -r requirements.txt
-else
-  echo "[Deps] No requirements.txt found. Skipping."
-fi
-
-# Ensure Python can import from project root
-export PYTHONPATH="$PYTHONPATH:$ROOT"
-
-# Prepare directories
-mkdir -p results/baseline_runs results/solver_runs results/comparison_tables results/plots
-
-echo "=== Step 1: Archive old timestamped baselines (kept for audit) ==="
-mkdir -p results/baseline_runs/_bak
-# Move only files with leading timestamp like 20250813T213320Z_*.json
-find results/baseline_runs -maxdepth 1 -type f -regextype posix-extended \
-  -regex '.*/[0-9]{8}T[0-9]{6}Z_.*\.json' -print -exec mv {} results/baseline_runs/_bak/ \; || true
-
-echo "=== Step 2: Run baseline experiments ==="
-if [ -x ./experiments/run_baseline_all.sh ]; then
-  ./experiments/run_baseline_all.sh
-else
-  echo "[Baseline] Missing ./experiments/run_baseline_all.sh — skipping baseline stage."
-fi
-
-echo "=== Step 3: Run solver experiments ==="
-if [ -x ./experiments/run_solver_all.sh ]; then
-  ./experiments/run_solver_all.sh
-else
-  echo "[Solver] Missing ./experiments/run_solver_all.sh — skipping solver stage."
-fi
-
-echo "=== Step 4: Build merged solver_vs_baseline.md ==="
-python build_solver_vs_baseline.py
-TABLE="results/comparison_tables/solver_vs_baseline.md"
-if [ -f "$TABLE" ]; then
-  echo "[Table] Wrote $TABLE"
-  echo "[Table] Preview:"
-  grep -m 3 '|' "$TABLE" || true
-fi
-
-echo "=== Step 5: Generate quick plots (runtime/objective) ==="
-python - <<'PY'
-import os, re, pandas as pd, matplotlib.pyplot as plt
-table_path = "results/comparison_tables/solver_vs_baseline.md"
-out_dir = "results/plots"
-os.makedirs(out_dir, exist_ok=True)
-
-# Parse the markdown table by splitting on pipes and cleaning
-with open(table_path, "r") as f:
-    lines = [ln.rstrip("\n") for ln in f]
-
-# Find the header row that starts the table
-start = next((i for i, ln in enumerate(lines) if ln.strip().startswith("| Instance |")), None)
-if start is None:
-    raise SystemExit("No table header found in solver_vs_baseline.md")
-
-data_lines = [ln for ln in lines[start+2:] if ln.strip().startswith("|")]
-records = []
-headers = [h.strip() for h in lines[start].strip().strip("|").split("|")]
-for ln in data_lines:
-    parts = [p.strip() for p in ln.strip().strip("|").split("|")]
-    if len(parts) != len(headers):
-        continue
-    rec = dict(zip(headers, parts))
-    # Skip separator or empty rows
-    if rec.get("Instance", "").lower() in ("", "instance", "---"):
-        continue
-    records.append(rec)
-
-if not records:
-    raise SystemExit("No data rows in table")
-
-df = pd.DataFrame(records)
-
-# Convert numeric columns
-for col in ["Objective", "Runtime (s)", "Baseline Objective", "Baseline Runtime (s)"]:
-    df[col] = pd.to_numeric(df[col].replace("-", pd.NA), errors="coerce")
-
-# Plot 1: Runtime comparison
-plt.figure(figsize=(8,4))
-ix = range(len(df))
-plt.bar([i - 0.2 for i in ix], df["Runtime (s)"], width=0.4, label="Solver")
-plt.bar([i + 0.2 for i in ix], df["Baseline Runtime (s)"], width=0.4, label="Baseline")
-plt.xticks(list(ix), df["Instance"], rotation=0)
-plt.ylabel("Seconds")
-plt.title("Runtime: Solver vs Baseline")
-plt.legend()
-plt.tight_layout()
-plt.savefig(os.path.join(out_dir, "runtime_comparison.png"))
-plt.close()
-
-# Plot 2: Objective comparison
-plt.figure(figsize=(8,4))
-plt.bar([i - 0.2 for i in ix], df["Objective"], width=0.4, label="Solver")
-plt.bar([i + 0.2 for i in ix], df["Baseline Objective"], width=0.4, label="Baseline")
-plt.xticks(list(ix), df["Instance"], rotation=0)
-plt.ylabel("Objective")
-plt.title("Objective: Solver vs Baseline")
-plt.legend()
-plt.tight_layout()
-plt.savefig(os.path.join(out_dir, "objective_comparison.png"))
-plt.close()
-
-print("[Plots] Saved to results/plots: runtime_comparison.png, objective_comparison.png")
-PY
-
-echo "=== Step 6: Update PROJECT_SUMMARY.md snapshot metrics ==="
-python - <<'PY'
-import re, pandas as pd, math
-
-table_path = "results/comparison_tables/solver_vs_baseline.md"
-summary_path = "PROJECT_SUMMARY.md"
-
-# Read table
-df = pd.read_csv(table_path, sep="|", engine="python").dropna(how="all", axis=1)
-df.columns = [c.strip() for c in df.columns]
-df = df[df["Instance"].astype(str).str.len() > 0]
-num = lambda s: pd.to_numeric(df[s].replace("-", pd.NA), errors="coerce")
-
-avg_solver_time = num("Runtime (s)").mean()
-avg_baseline_time = num("Baseline Runtime (s)").mean()
-avg_solver_obj = num("Objective").mean()
-avg_baseline_obj = num("Baseline Objective").mean()
-
-speedup = (avg_baseline_time / avg_solver_time) if (pd.notna(avg_solver_time) and pd.notna(avg_baseline_time) and avg_solver_time>0) else pd.NA
-accuracy = (avg_solver_obj / avg_baseline_obj * 100) if (pd.notna(avg_solver_obj) and pd.notna(avg_baseline_obj) and avg_baseline_obj!=0) else pd.NA
-
-def fmt(x, prec=2, suffix=""):
-    try:
-        return f"{float(x):.{prec}f}{suffix}"
-    except Exception:
-        return "pending"
-
-with open(summary_path, "r", encoding="utf-8") as f:
-    text = f.read()
-
-# Replace three snapshot lines if present; otherwise, do nothing
-text = re.sub(r"\| Average Runtime \(s\) \| .*? \| .*? \|",
-              f"| Average Runtime (s) | {fmt(avg_solver_time)} | {fmt(avg_baseline_time)} |", text)
-text = re.sub(r"\| Solution Accuracy \(\%\) \| .*? \| .*? \|",
-              f"| Solution Accuracy (%) | {fmt(accuracy)} | — |", text)
-text = re.sub(r"\| Speedup Factor \| .*? \| .*? \|",
-              f"| Speedup Factor | {fmt(speedup, 2, '×')} | — |", text)
-
-with open(summary_path, "w", encoding="utf-8") as f:
-    f.write(text)
-
-print("[Summary] PROJECT_SUMMARY.md updated.")
-PY
-
-echo "=== Done ==="
-echo "Table: results/comparison_tables/solver_vs_baseline.md"
-echo "Plots: results/plots/runtime_comparison.png, results/plots/objective_comparison.png"
-
+# --- Auto-commit hook end ---
