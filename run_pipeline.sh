@@ -353,9 +353,12 @@ if [ "${WISER_AUTOCOMMIT:-1}" = "1" ]; then
 fi
 # --- Auto-commit hook end ---
 
+
 ## AUTO-REFRESH-RUNTIMES
 {
   SUMMARY="PROJECT_SUMMARY.md"
+  REPO_URL="https://github.com/kkgodbless01/WISER_Optimization_VG"
+
   # Step 0 runtime
   if grep -q "^Runtime:" "$SUMMARY"; then
     STEP0_RUNTIME=$(grep "^Runtime:" "$SUMMARY" | head -n1 | awk '{print $2}')
@@ -375,6 +378,15 @@ PY
     STEP1_RUNTIME="N/A"
   fi
 
+  # Latest SHA (after pipeline run)
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    SHA=$(git rev-parse --short HEAD)
+    SHA_LINK="${REPO_URL}/commit/${SHA}"
+  else
+    SHA="N/A"
+    SHA_LINK="#"
+  fi
+
   # Remove old table
   if [ -f "$SUMMARY" ]; then
     awk 'BEGIN{skip=0}
@@ -386,15 +398,15 @@ PY
     touch "$SUMMARY"
   fi
 
-  # Prepend fresh table
+  # Prepend new table with clickable SHA
   TMPFILE=$(mktemp)
   {
     echo "<!-- RUNTIMES-TABLE-START -->"
     echo ""
-    echo "| Step   | Runtime (s) |"
-    echo "|--------|-------------|"
-    echo "| Step 0 | ${STEP0_RUNTIME} |"
-    echo "| Step 1 | ${STEP1_RUNTIME} |"
+    echo "| Step   | Runtime (s) | Git |"
+    echo "|--------|-------------|-----|"
+    echo "| Step 0 | ${STEP0_RUNTIME} | [${SHA}](${SHA_LINK}) |"
+    echo "| Step 1 | ${STEP1_RUNTIME} | [${SHA}](${SHA_LINK}) |"
     echo ""
     echo "<!-- RUNTIMES-TABLE-END -->"
     echo ""
