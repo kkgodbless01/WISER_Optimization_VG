@@ -367,6 +367,7 @@ fi
     STEP0_RUNTIME="N/A"
   fi
 
+git rev-parse --short HEAD > .step0_sha  # [auto] capture Step 0 SHA
   # Step 1 runtime
   if [ -f outputs/step_1/metrics.json ]; then
     STEP1_RUNTIME=$(python3 - <<'PY'
@@ -424,3 +425,6 @@ PY
   # Cleanup temp SHA files
   rm -f .step0_sha .step1_sha
 }
+
+# Fallback: capture Step 1 SHA if not already inserted
+git rev-parse --short HEAD > .step1_sha  # [auto] fallback
