@@ -66,6 +66,19 @@ PY
     summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
     touch PROJECT_SUMMARY.md
  # --- Step 0: Record log mode in PROJECT_SUMMARY.md ---
+ log_mode_line="Log Mode: $([ \"${WISER_NO_COLOR:-0}\" = \"1\" ] && echo Plain-Text || echo Color)"
+ # Use local time in Africa/Accra
+ env_summary_line="Env: $(TZ=Africa/Accra date +%F_%T) | Git: $(git rev-parse --short HEAD 2>/dev/null || echo N/A) | Python: $(python3 --version 2>/dev/null | awk \\"{print \\$2}\\")"
+ sed -i \"/^Log Mode:/d\" PROJECT_SUMMARY.md
+ sed -i \"/^Env:/d\" PROJECT_SUMMARY.md
+ sed -i \"1i$env_summary_line\" PROJECT_SUMMARY.md
+ sed -i \"1i$log_mode_line\" PROJECT_SUMMARY.md
+
+ # --- Step 0.1: Refresh Git SHA after auto-commit ---
+ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+   final_sha=$(git rev-parse --short HEAD)
+   sed -i \"s/^Env: .*Git: [^|]*/Env: $(TZ=Africa/Accra date +%F_%T) | Git: $final_sha/\" PROJECT_SUMMARY.md
+ fi
  log_mode_line="Log Mode: $([ "${WISER_NO_COLOR:-0}" = "1" ] && echo Plain-Text || echo Color)"
  sed -i "/^Log Mode:/d" PROJECT_SUMMARY.md
  sed -i "1i$log_mode_line" PROJECT_SUMMARY.md
