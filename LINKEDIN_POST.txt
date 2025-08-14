@@ -6,8 +6,8 @@ What’s inside:
 • Recruiter‑ready README and summary
 
 Key results (snapshot):
-• Runtime: Solver = None s vs Baseline = None s
-• Accuracy: Solver = None% vs Baseline = None%
+• • Runtime: Solver = 0.021 s vs Baseline = —
+• • Accuracy: Solver = 50.000 vs Baseline = —
 
 Full project + results:
 https://github.com/kkgodbless01/WISER_Optimization_VG
