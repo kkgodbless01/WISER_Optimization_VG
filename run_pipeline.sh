@@ -352,3 +352,53 @@ if [ "${WISER_AUTOCOMMIT:-1}" = "1" ]; then
   fi
 fi
 # --- Auto-commit hook end ---
+
+## AUTO-REFRESH-RUNTIMES
+{
+  SUMMARY="PROJECT_SUMMARY.md"
+  # Step 0 runtime
+  if grep -q "^Runtime:" "$SUMMARY"; then
+    STEP0_RUNTIME=$(grep "^Runtime:" "$SUMMARY" | head -n1 | awk '{print $2}')
+  else
+    STEP0_RUNTIME="N/A"
+  fi
+
+  # Step 1 runtime
+  if [ -f outputs/step_1/metrics.json ]; then
+    STEP1_RUNTIME=$(python3 - <<'PY'
+import json
+m=json.load(open("outputs/step_1/metrics.json"))
+print(m.get("runtime_s", "N/A"))
+PY
+)
+  else
+    STEP1_RUNTIME="N/A"
+  fi
+
+  # Remove old table
+  if [ -f "$SUMMARY" ]; then
+    awk 'BEGIN{skip=0}
+         /<!-- RUNTIMES-TABLE-START -->/{skip=1; next}
+         /<!-- RUNTIMES-TABLE-END -->/{skip=0; next}
+         {if (!skip) print}' "$SUMMARY" > "${SUMMARY}.tmp"
+    mv "${SUMMARY}.tmp" "$SUMMARY"
+  else
+    touch "$SUMMARY"
+  fi
+
+  # Prepend fresh table
+  TMPFILE=$(mktemp)
+  {
+    echo "<!-- RUNTIMES-TABLE-START -->"
+    echo ""
+    echo "| Step   | Runtime (s) |"
+    echo "|--------|-------------|"
+    echo "| Step 0 | ${STEP0_RUNTIME} |"
+    echo "| Step 1 | ${STEP1_RUNTIME} |"
+    echo ""
+    echo "<!-- RUNTIMES-TABLE-END -->"
+    echo ""
+    cat "$SUMMARY"
+  } > "$TMPFILE"
+  mv "$TMPFILE" "$SUMMARY"
+}
