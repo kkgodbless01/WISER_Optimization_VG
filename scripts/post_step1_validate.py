@@ -5,25 +5,27 @@ metrics_path = Path("outputs/step_1/metrics.json")
 if not metrics_path.exists():
     sys.exit("❌ metrics.json not found — Step 1 may have failed.")
 
-data = json.loads(metrics_path.read_text())
+try:
+    data = json.loads(metrics_path.read_text())
+except Exception as e:
+    sys.exit(f"❌ Failed to parse metrics.json: {e}")
+
 allocs = data.get("allocations", [])
 total_cost = data.get("total_cost", data.get("best_cost", 0))
 errors = []
 
 if not isinstance(allocs, list) or not allocs:
-    errors.append("Allocations missing or empty")
+    errors.append("Allocations missing/empty")
 else:
     if abs(sum(allocs) - 1.0) > 1e-6:
-        errors.append(f"Allocations do not sum to 1.0 (sum={sum(allocs)})")
+        errors.append(f"Allocations sum={sum(allocs)} (expected 1.0)")
     if min(allocs) < 0:
         errors.append("Negative allocation detected")
 if not (isinstance(total_cost, (int, float)) and total_cost > 0):
-    errors.append("Total cost is non‑positive")
+    errors.append("Total cost non‑positive")
 
 if errors:
-    print("⚠ Validation failed:")
-    for e in errors: print("  -", e)
-    sys.exit(1)
+    print("⚠ Validation failed:"); [print("  -", e) for e in errors]; sys.exit(1)
 
 pretty = {
     "best_cost": round(float(total_cost), 3),
