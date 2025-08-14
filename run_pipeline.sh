@@ -65,6 +65,10 @@ PY
     fail_count=$(wc -l < "$log_file" 2>/dev/null || echo 0)
     summary_line="📊 Step 0 Dependency Check: $fail_count packages failed to install"
     touch PROJECT_SUMMARY.md
+ # --- Step 0: Record log mode in PROJECT_SUMMARY.md ---
+ log_mode_line="Log Mode: $([ "${WISER_NO_COLOR:-0}" = "1" ] && echo Plain-Text || echo Color)"
+ sed -i "/^Log Mode:/d" PROJECT_SUMMARY.md
+ sed -i "1i$log_mode_line" PROJECT_SUMMARY.md
     sed -i "1i$summary_line" PROJECT_SUMMARY.md
     if [ -s "$log_file" ]; then
         echo "${c_yellow}📄 Recent failures:${c_reset}"
