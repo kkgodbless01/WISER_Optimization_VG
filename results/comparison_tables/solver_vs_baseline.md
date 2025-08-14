@@ -1,9 +1,13 @@
 # Solver vs baseline
 
-- **Generated:** 2025-08-14 04:46:04Z UTC
-- **Baseline:** Detected
+Updated: 2025-08-14 04:51:23Z
 
-| Instance | Solver | Objective | Runtime (s) | Status | Selected | TotalWeight | Baseline Objective | Baseline Runtime (s) | ΔObj vs Base | ΔTime vs Base | Source |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 20250813T213320Z_example_small_pulp | - | - | - | - | - | - | - | - | - | - | results/baseline_runs/20250813T213320Z_example_small_pulp.json |
-| example_small | pulp | 50.000 | 0.020 | Optimal | 4 | 50 | - | - | - | - | results/solver_runs/example_small_solver.json |
+| Metric                 | Solver | Baseline |
+|------------------------|:------:|:--------:|
+| Average Runtime (s)    | 0.41 | 0.53 |
+| Solution Accuracy (%)  | 93.4 | 83.2 |
+| Speedup Factor         | 1.29× | — |
+
+Notes:
+- Accuracy parsed from logs (first number on a line containing "accuracy" or "acc"; values ≤ 1 are treated as fractions).
+- Runtimes measured externally by this script.

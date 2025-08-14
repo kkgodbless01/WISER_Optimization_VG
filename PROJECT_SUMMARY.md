@@ -11,9 +11,9 @@ A transparent, end-to-end benchmarking pipeline for quantum‑inspired solvers o
 ## Key results (snapshot)
 | Metric                | Solver Variant | Baseline |
 |-----------------------|----------------|----------|
-| Average Runtime (s)   | XX.XX          | YY.YY    |
-| Solution Accuracy (%) | None | None |
-| Speedup Factor        | X.XX×          | —        |
+| Average Runtime (s) | pending | pending |
+| Solution Accuracy (%) | pending | pending |
+| Speedup Factor | pending | — |
 
 Full table:
 - results/comparison_tables/solver_vs_baseline.md
