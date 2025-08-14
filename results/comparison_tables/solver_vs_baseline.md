@@ -1,11 +1,11 @@
 # Solver vs baseline
 
-Updated: 2025-08-14 04:51:23Z
+Updated: 2025-08-14 05:11:12Z
 
 | Metric                 | Solver | Baseline |
 |------------------------|:------:|:--------:|
 | Average Runtime (s)    | 0.41 | 0.53 |
-| Solution Accuracy (%)  | 93.4 | 83.2 |
+| Solution Accuracy (%)  | 91.7 | 82.1 |
 | Speedup Factor         | 1.29× | — |
 
 Notes:
