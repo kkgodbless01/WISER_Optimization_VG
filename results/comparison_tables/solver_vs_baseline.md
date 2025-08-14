@@ -1,6 +1,6 @@
 # Solver vs baseline
 
-- **Generated:** 2025-08-14 07:06:39Z UTC
+- **Generated:** 2025-08-14 07:20:55Z UTC
 - **Baseline:** Detected
 
 | Instance | Solver | Objective | Runtime (s) | Status | Selected | TotalWeight | Baseline Objective | Baseline Runtime (s) | ΔObj vs Base | ΔTime vs Base | Source |
