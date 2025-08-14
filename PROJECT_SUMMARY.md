@@ -1,3 +1,12 @@
+<!-- RUNTIMES-TABLE-START -->
+
+| Step | Runtime (s) |
+|------|-------------|
+| Step 0 | N/A |
+| Step 1 | 0.000515 |
+
+<!-- RUNTIMES-TABLE-END -->
+
 📊 Step 0 Dependency Check: 0 packages failed to install
 📊 Step 0 Dependency Check: 0 packages failed to install
 📊 Step 0 Dependency Check: 0 packages failed to install
