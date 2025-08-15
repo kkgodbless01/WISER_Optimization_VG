@@ -9,3 +9,5 @@ __pycache__/
 # OS / misc
 .DS_Store
 *.log
+venv/
+.venv*/
