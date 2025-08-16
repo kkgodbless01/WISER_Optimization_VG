@@ -1,0 +1,12 @@
+{
+  "step": "step_1_static_solver",
+  "status": "success",
+  "objective": "min leftover budget (greedy baseline)",
+  "best_cost": 50.0,
+  "runtime_s": 0.000515,
+  "timestamp_local": "14-Aug-2025 13:11",
+  "git_sha": "0932654b",
+  "python": "3.11.8",
+  "input_file": "/home/kingsley/Documents/WISER_Optimization_VG/data/problem.json",
+  "outdir": "/home/kingsley/Documents/WISER_Optimization_VG/outputs/step_1"
+}

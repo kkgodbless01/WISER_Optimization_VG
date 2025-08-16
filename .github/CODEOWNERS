@@ -1,0 +1,4 @@
+# Auto-request @bimehta for changes to requirements.txt
+/requirements.txt    @bimehta
+# test trigger for CODEOWNERS auto-review
+

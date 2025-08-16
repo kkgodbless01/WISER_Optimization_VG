@@ -1,0 +1,28 @@
+{
+  "budget": 1000.0,
+  "total_spend": 950.0,
+  "leftover": 50.0,
+  "chosen_count": 5,
+  "chosen": [
+    {
+      "id": "B3",
+      "price": 90.0
+    },
+    {
+      "id": "B1",
+      "price": 120.0
+    },
+    {
+      "id": "B5",
+      "price": 180.0
+    },
+    {
+      "id": "B2",
+      "price": 250.0
+    },
+    {
+      "id": "B4",
+      "price": 310.0
+    }
+  ]
+}

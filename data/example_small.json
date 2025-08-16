@@ -1,0 +1,8 @@
+{
+  "name": "example_small",
+  "items": [
+    {"id": 1, "weight": 10, "value": 15},
+    {"id": 2, "weight": 20, "value": 20}
+  ]
+}
+

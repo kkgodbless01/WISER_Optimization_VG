@@ -1,0 +1,10 @@
+{
+  "budget": 1000.0,
+  "assets": [
+    {"id": "B1", "price": 120.0, "expected_yield": 0.03},
+    {"id": "B2", "price": 250.0, "expected_yield": 0.025},
+    {"id": "B3", "price": 90.0,  "expected_yield": 0.02},
+    {"id": "B4", "price": 310.0, "expected_yield": 0.028},
+    {"id": "B5", "price": 180.0, "expected_yield": 0.031}
+  ]
+}

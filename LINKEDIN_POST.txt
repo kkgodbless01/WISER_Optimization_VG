@@ -1,0 +1,18 @@
+I just shipped a reproducible benchmarking pipeline for quantum‑inspired solvers — built on WSL/Ubuntu with Python 3.11.
+
+What’s inside:
+• End‑to‑end, documented runs (no guesswork)
+• Auto‑generated comparison table (speed + accuracy)
+• Recruiter‑ready README and summary
+
+Key results (snapshot):
+• • Runtime: Solver = 0.021 s vs Baseline = —
+• • Accuracy: Solver = 50.000 vs Baseline = —
+
+Full project + results:
+https://github.com/kkgodbless01/WISER_Optimization_VG
+Results table:
+https://github.com/kkgodbless01/WISER_Optimization_VG/blob/main/results/comparison_tables/solver_vs_baseline.md
+
+If you’re hiring for data, optimization, or research roles, I’d love to connect.
+— Kingsley Godbless
