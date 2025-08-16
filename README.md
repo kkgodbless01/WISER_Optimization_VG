@@ -24,6 +24,5 @@ source venv/bin/activate
 # Run solver on a specific instance (example)
 python src/run_baseline_solver.py data/example_small.json
 
-# Generate Markdown comparison table
-python src/make_markdown_table.py
+
 
